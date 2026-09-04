@@ -106,6 +106,17 @@ export default function Members() {
     }
   };
 
+  const handleDelete = async (member) => {
+    if (!window.confirm(`Are you sure you want to delete member "${member.name}"?`)) return;
+    try {
+      await api.delete(`/members/${member._id}`);
+      toast.success("Member deleted successfully");
+      fetchMembers(search);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not delete member");
+    }
+  };
+
 
 
   return (
@@ -204,8 +215,16 @@ export default function Members() {
                       <button
                         onClick={() => openEditModal(member)}
                         className="p-2 text-ink-500 hover:text-ink-800 hover:bg-ink-50 rounded-md transition-colors"
+                        title="Edit Member"
                       >
                         <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(member)}
+                        className="p-2 text-rust/70 hover:text-rust hover:bg-rust/10 rounded-md transition-colors"
+                        title="Delete Member"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

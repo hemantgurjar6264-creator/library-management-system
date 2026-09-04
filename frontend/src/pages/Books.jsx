@@ -182,11 +182,11 @@ export default function Books() {
     }
   };
 
-  const handleArchive = async (book) => {
-    if (!window.confirm(`Archive "${book.title}"?`)) return;
+  const handleDelete = async (book) => {
+    if (!window.confirm(`Are you sure you want to delete "${book.title}"?`)) return;
     try {
       await api.delete(`/books/${book._id}`);
-      toast.success("Book archived");
+      toast.success("Book deleted successfully");
       fetchBooks({});
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not archive book");
@@ -382,10 +382,10 @@ export default function Books() {
                   <Pencil size={13} /> Edit
                 </button>
                 <button
-                  onClick={() => handleArchive(book)}
+                  onClick={() => handleDelete(book)}
                   className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rust hover:bg-rust/5 rounded-md py-2 transition-colors"
                 >
-                  <Trash2 size={13} /> Archive
+                  <Trash2 size={13} /> Delete
                 </button>
               </div>
             </div>
