@@ -31,73 +31,63 @@ export default function Login() {
   };
 
   return (
-    <div style={{ margin: 0, padding: 0, fontFamily: "'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", width: "100%", height: "100vh", display: "flex", backgroundColor: "#e2e8f0", backgroundImage: "url('/campus-hero.jpg')", backgroundSize: "cover", backgroundPosition: "center bottom", overflow: "hidden", position: "relative" }}>
+    <div className="w-full h-screen flex bg-slate-200 bg-[url('/campus-hero.jpg')] bg-cover bg-bottom overflow-hidden relative font-sans">
       
       {/* Blur Overlay */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backdropFilter: "blur(4px)", zIndex: 0 }}></div>
+      <div className="absolute inset-0 backdrop-blur-[4px] z-0"></div>
 
-      {/* Bottom Dark Bar spanning entire width */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "90px", backgroundColor: "#1c2b45", display: "flex", justifyContent: "flex-start", gap: "60px", alignItems: "center", padding: "0 60px", zIndex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <div style={{ width: "45px", height: "45px", borderRadius: "50%", border: "1px solid rgba(255,107,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      {/* Bottom Dark Bar spanning entire width (Hidden on mobile) */}
+      <div className="hidden lg:flex absolute bottom-0 left-0 w-full h-[90px] bg-[#1c2b45] justify-start gap-[60px] items-center px-[60px] z-[1]">
+        <div className="flex items-center gap-[15px]">
+          <div className="w-[45px] h-[45px] rounded-full border border-[#ff6b00]/50 flex justify-center items-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
           </div>
           <div>
-            <div style={{ color: "white", fontSize: "15px", fontWeight: "600", letterSpacing: "0.5px" }}>Secure Access</div>
-            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "3px" }}>Your data is safe with us</div>
+            <div className="text-white text-[15px] font-semibold tracking-wide">Secure Access</div>
+            <div className="text-slate-400 text-[12px] mt-[3px]">Your data is safe with us</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <div style={{ width: "45px", height: "45px", borderRadius: "50%", border: "1px solid rgba(255,107,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <div className="flex items-center gap-[15px]">
+          <div className="w-[45px] h-[45px] rounded-full border border-[#ff6b00]/50 flex justify-center items-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           </div>
           <div>
-            <div style={{ color: "white", fontSize: "15px", fontWeight: "600", letterSpacing: "0.5px" }}>Library Excellence</div>
-            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "3px" }}>Books today, leaders tomorrow</div>
+            <div className="text-white text-[15px] font-semibold tracking-wide">Library Excellence</div>
+            <div className="text-slate-400 text-[12px] mt-[3px]">Books today, leaders tomorrow</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <div style={{ width: "45px", height: "45px", borderRadius: "50%", border: "1px solid rgba(255,107,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <div className="flex items-center gap-[15px]">
+          <div className="w-[45px] h-[45px] rounded-full border border-[#ff6b00]/50 flex justify-center items-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" strokeWidth="2"><polygon points="12 2 2 7 22 7 12 2"></polygon><polyline points="2 17 2 22 22 22 22 17"></polyline><polyline points="6 12 6 17"></polyline><polyline points="10 12 10 17"></polyline><polyline points="14 12 14 17"></polyline><polyline points="18 12 18 17"></polyline></svg>
           </div>
           <div>
-            <div style={{ color: "white", fontSize: "15px", fontWeight: "600", letterSpacing: "0.5px" }}>Smart Management</div>
-            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "3px" }}>Efficient. Reliable. Simple.</div>
+            <div className="text-white text-[15px] font-semibold tracking-wide">Smart Management</div>
+            <div className="text-slate-400 text-[12px] mt-[3px]">Efficient. Reliable. Simple.</div>
           </div>
         </div>
       </div>
 
       {/* Main Layout Container */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 2, display: "flex" }}>
+      <div className="absolute inset-0 z-[2] flex flex-col md:flex-row">
         
-        {/* Left Side */}
-        <div style={{ flex: 1.3, position: "relative" }}>
-          
+        {/* Left Side (Hidden on smaller screens) */}
+        <div className="hidden md:block flex-[1.3] relative">
           {/* College Logo Overlay */}
           <img
             src="/ssism-logo.png"
             alt="Sant Singaji Institute of Science & Management"
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "400px",
-              maxWidth: "80%",
-              filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.25))"
-            }}
+            className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[400px] max-w-[80%] drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
           />
-
         </div>
 
         {/* Right Side (Form Area) */}
-        <div style={{ width: "520px", height: "100%", padding: "20px 30px 20px 0", display: "flex", alignItems: "center", zIndex: 10 }}>
-          <div style={{ width: "100%", height: "100%", backgroundColor: "white", borderRadius: "30px", boxShadow: "0 20px 50px rgba(0,0,0,0.15)", padding: "30px 40px", display: "flex", flexDirection: "column", overflowY: "auto", boxSizing: "border-box" }}>
+        <div className="w-full md:w-[520px] h-full p-4 md:py-5 md:pr-8 md:pl-0 flex items-center justify-center z-10 mx-auto md:mx-0">
+          <div className="w-full max-w-md md:max-w-none h-auto md:h-full max-h-[90vh] md:max-h-none bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 md:p-10 flex flex-col overflow-y-auto">
             
             {/* Top Icon Badge */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "20px" }}>
+            <div className="flex flex-col items-center mb-5">
               <div style={{ width: "65px", height: "65px", borderRadius: "50%", border: "2px solid #ffedd5", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "15px" }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff6b00" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
               </div>

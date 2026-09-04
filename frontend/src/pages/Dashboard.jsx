@@ -45,7 +45,7 @@ export default function Dashboard() {
         <div className="text-black text-sm">Loading shelves…</div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard label="Total Books" value={stats.totalBooks} icon={BookOpen} accent="#B08D3E" />
             <StatCard label="Book Copies" value={stats.totalCopies} icon={BookOpen} accent="#3F6C51" />
             <StatCard label="Available" value={stats.availableCopies} icon={BookOpen} accent="#5D71A5" />

@@ -156,7 +156,7 @@ export default function Members() {
           <p className="text-black text-sm">No members yet. Register your first member.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-card border border-ink-100/60 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-card border border-ink-100/60 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-ink-50/60 text-left text-ink-500 text-xs uppercase tracking-wide">
