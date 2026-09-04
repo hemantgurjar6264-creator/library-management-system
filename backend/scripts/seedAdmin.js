@@ -17,9 +17,9 @@ const seedAdmin = async () => {
     }
 
     // Avoid hardcoding passwords in source code.
-    // Use environment variable or generate a random one if not provided.
+    // Use environment variable. If not provided, generate a random one and DO NOT log it.
     const crypto = require("crypto");
-    const defaultPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(8).toString("hex");
+    const defaultPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString("hex");
 
     await User.create({
       name: "System Admin",
@@ -30,9 +30,10 @@ const seedAdmin = async () => {
 
     console.log("✅ Admin user seeded successfully!");
     console.log(`Email: ${email}`);
+    
     if (!process.env.ADMIN_PASSWORD) {
-      console.log(`🔒 GENERATED PASSWORD: ${defaultPassword}`);
-      console.log(`Please save this password! You will need it to login.`);
+      console.log(`🔒 A secure random password was generated. It has NOT been logged for security reasons.`);
+      console.log(`To set a known password, please provide ADMIN_PASSWORD in your .env file and run this script again after deleting the admin user.`);
     } else {
       console.log("Password: <set via ADMIN_PASSWORD env var>");
     }
