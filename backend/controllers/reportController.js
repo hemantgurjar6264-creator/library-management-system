@@ -42,10 +42,10 @@ const buildMonthlyReportData = async (month, year) => {
 
   const finesCollectedThisMonth = returnedThisMonth.reduce((sum, t) => sum + (t.fine || 0), 0);
 
-  const totalBooks = await Book.countDocuments();
+  const totalBooks = await Book.countDocuments({ isArchived: { $ne: true } });
   const totalCopies = await BookCopy.countDocuments();
   const availableCopies = await BookCopy.countDocuments({ status: "available" });
-  const totalMembers = await Member.countDocuments();
+  const totalMembers = await Member.countDocuments({ status: { $ne: "inactive" } });
   const activeMembers = await Member.countDocuments({ status: "active" });
 
   const overdueWithFine = overdueList.map((t) => {

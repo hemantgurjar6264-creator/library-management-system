@@ -148,8 +148,8 @@ const returnBook = asyncHandler(async (req, res) => {
 // @route   GET /api/transactions/stats/dashboard
 const getDashboardStats = asyncHandler(async (req, res) => {
   const settings = await getSettingsDoc();
-  const totalBooks = await Book.countDocuments();
-  const totalMembers = await Member.countDocuments();
+  const totalBooks = await Book.countDocuments({ isArchived: { $ne: true } });
+  const totalMembers = await Member.countDocuments({ status: { $ne: "inactive" } });
   const booksIssued = await Transaction.countDocuments({ status: { $in: ["issued", "overdue"] } });
 
   const now = new Date();
@@ -159,6 +159,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   }).countDocuments();
 
   const totalCopiesAgg = await Book.aggregate([
+    { $match: { isArchived: { $ne: true } } },
     { $group: { _id: null, total: { $sum: "$totalCopies" }, available: { $sum: "$availableCopies" } } },
   ]);
 
