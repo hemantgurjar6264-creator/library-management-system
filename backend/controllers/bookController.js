@@ -62,7 +62,13 @@ const getBooks = asyncHandler(async (req, res) => {
     query.availableCopies = { $lte: 0 };
   }
 
-  const books = await Book.find(query).sort({ createdAt: -1 });
+  let queryObj = Book.find(query).sort({ createdAt: -1 });
+  
+  if (req.query.limit) {
+    queryObj = queryObj.limit(Number(req.query.limit));
+  }
+
+  const books = await queryObj;
   res.json(books);
 });
 

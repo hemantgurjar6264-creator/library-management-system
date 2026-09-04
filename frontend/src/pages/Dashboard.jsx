@@ -16,8 +16,8 @@ export default function Dashboard() {
       try {
         const [statsRes, booksRes, overdueRes] = await Promise.all([
           api.get("/transactions/stats/dashboard"),
-          api.get("/books?limit=5"), // Assuming backend ignores limit or we slice it
-          api.get("/transactions/overdue")
+          api.get("/books?limit=5"),
+          api.get("/transactions/overdue?limit=5")
         ]);
         setStats(statsRes.data);
         setRecentBooks(booksRes.data.slice(0, 5));

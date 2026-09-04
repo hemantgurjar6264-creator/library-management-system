@@ -231,12 +231,18 @@ const getOverdueBooks = asyncHandler(async (req, res) => {
   const now = new Date();
   const settings = await getSettingsDoc();
   
-  const overdueTransactions = await Transaction.find({
+  let queryObj = Transaction.find({
     status: { $in: ["issued", "overdue"] },
     dueDate: { $lt: now },
   })
     .populate(POPULATE_FIELDS)
     .sort({ dueDate: 1 });
+    
+  if (req.query.limit) {
+    queryObj = queryObj.limit(Number(req.query.limit));
+  }
+
+  const overdueTransactions = await queryObj;
     
   // Calculate dynamic fine
   const results = overdueTransactions.map(t => {
