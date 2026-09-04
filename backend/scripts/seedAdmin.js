@@ -16,21 +16,26 @@ const seedAdmin = async () => {
       process.exit(0);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const password = await bcrypt.hash("admin123", salt);
-    
-    // Create using the raw password; pre-save hook will hash it since we're using create
-    // Actually we don't need to manually hash if we just rely on the pre-save hook. Let's do that.
+    // Avoid hardcoding passwords in source code.
+    // Use environment variable or generate a random one if not provided.
+    const crypto = require("crypto");
+    const defaultPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(8).toString("hex");
+
     await User.create({
       name: "System Admin",
       email: email,
-      password: "admin123",
+      password: defaultPassword,
       role: "admin",
     });
 
     console.log("✅ Admin user seeded successfully!");
     console.log(`Email: ${email}`);
-    console.log(`Password: admin123`);
+    if (!process.env.ADMIN_PASSWORD) {
+      console.log(`🔒 GENERATED PASSWORD: ${defaultPassword}`);
+      console.log(`Please save this password! You will need it to login.`);
+    } else {
+      console.log("Password: <set via ADMIN_PASSWORD env var>");
+    }
     process.exit(0);
   } catch (error) {
     console.error("❌ Failed to seed admin:", error.message);

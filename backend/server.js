@@ -53,13 +53,16 @@ const startServer = async () => {
 // break every time Vite picks a different port (5173, 5174, 5175, ...).
 // In production, only CLIENT_URL (set in .env) is allowed.
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173").split(",");
-const isLocalhost = (origin) => /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+const isLocalhost = (origin) => /^http:\/\/(localhost|127\.0\.0\.1):(5173|3000|5174)$/.test(origin);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // same-origin / server-to-server / curl
-      if (allowedOrigins.includes(origin) || isLocalhost(origin)) {
+      // In production, restrict to allowedOrigins (CLIENT_URL)
+      // Allow undefined origin for server-to-server requests only in development
+      if (!origin && process.env.NODE_ENV !== "production") return callback(null, true);
+      
+      if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && isLocalhost(origin))) {
         return callback(null, true);
       }
       callback(new Error("Not allowed by CORS"));
@@ -71,7 +74,20 @@ app.use(express.json());
 
 // --- Security Hardening Middlewares ---
 // Set security HTTP headers
-app.use(helmet());
+app.use(
+  helmet({
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  })
+);
+
+// Prevent caching of sensitive API routes
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 
 // Rate Limiting: Limit each IP to 100 requests per 15 minutes
 const limiter = rateLimit({
