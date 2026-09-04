@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const ExcelJS = require("exceljs");
-const PDFDocument = require("pdfkit");
+const PDFDocument = require("pdfkit-table");
 const Transaction = require("../models/Transaction");
 const Book = require("../models/Book");
 const Member = require("../models/Member");
@@ -189,7 +189,7 @@ const exportPdfReport = asyncHandler(async (req, res) => {
   const { month, year } = req.query;
   const data = await buildMonthlyReportData(month, year);
 
-  const doc = new PDFDocument({ margin: 40, size: "A4" });
+  const doc = new PDFDocument({ margin: 50, size: "A4" });
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
@@ -197,60 +197,111 @@ const exportPdfReport = asyncHandler(async (req, res) => {
   );
   doc.pipe(res);
 
-  doc.fontSize(18).text("SSISM Library — Monthly Report", { align: "center" });
-  doc.moveDown(0.2);
-  doc.fontSize(12).fillColor("#666").text(data.label, { align: "center" });
-  doc.moveDown(1);
-  doc.fillColor("#000");
+  // Header
+  doc.fontSize(22).font('Helvetica-Bold').fillColor("#2c3e50").text("SSISM Library", { align: "center" });
+  doc.fontSize(14).font('Helvetica').fillColor("#7f8c8d").text(`Monthly Report — ${data.label}`, { align: "center" });
+  doc.moveDown(2);
 
-  doc.fontSize(14).text("Summary", { underline: true });
-  doc.moveDown(0.3);
-  doc.fontSize(10);
-  const summaryLines = [
-    `Total titles in catalog: ${data.totals.totalBooks}`,
-    `Total copies: ${data.totals.totalCopies}  |  Available copies: ${data.totals.availableCopies}`,
-    `Total members: ${data.totals.totalMembers}  |  Active members: ${data.totals.activeMembers}`,
-    `Books issued this month: ${data.issuedThisMonth.length}`,
-    `Books returned this month: ${data.returnedThisMonth.length}`,
-    `Fines collected this month: Rs. ${data.finesCollectedThisMonth}`,
-    `Currently overdue loans: ${data.overdueList.length}`,
-    `Estimated pending fines: Rs. ${data.overdueList.reduce((s, o) => s + o.estimatedFine, 0)}`,
-  ];
-  summaryLines.forEach((line) => doc.text(line));
-  doc.moveDown(1);
+  // Summary Section
+  doc.fontSize(16).font('Helvetica-Bold').fillColor("#34495e").text("Summary Snapshot", { underline: false });
+  doc.moveDown(0.5);
+  
+  const summaryTable = {
+    headers: [
+      { label: "Metric", property: "metric", width: 300, renderer: null },
+      { label: "Value", property: "value", width: 150, renderer: null }
+    ],
+    datas: [
+      { metric: "Total titles in catalog", value: data.totals.totalBooks.toString() },
+      { metric: "Total copies", value: data.totals.totalCopies.toString() },
+      { metric: "Available copies", value: data.totals.availableCopies.toString() },
+      { metric: "Total members", value: data.totals.totalMembers.toString() },
+      { metric: "Active members", value: data.totals.activeMembers.toString() },
+      { metric: "Books issued this month", value: data.issuedThisMonth.length.toString() },
+      { metric: "Books returned this month", value: data.returnedThisMonth.length.toString() },
+      { metric: "Fines collected this month", value: `Rs. ${data.finesCollectedThisMonth}` },
+      { metric: "Currently overdue loans", value: data.overdueList.length.toString() },
+      { metric: "Estimated pending fines", value: `Rs. ${data.overdueList.reduce((s, o) => s + o.estimatedFine, 0)}` },
+    ],
+  };
 
-  doc.fontSize(14).text("Overdue List", { underline: true });
-  doc.moveDown(0.3);
-  doc.fontSize(9);
+  await doc.table(summaryTable, { 
+    prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+    prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+      doc.font("Helvetica").fontSize(10);
+      indexColumn === 0 && doc.addBackground(rectRow, (indexRow % 2 ? '#fdfdfd' : '#f4f6f7'), 0.15);
+    }
+  });
+
+  doc.moveDown(2);
+
+  // Overdue List Section
+  doc.fontSize(16).font('Helvetica-Bold').fillColor("#FF6B00").text("Overdue List", { underline: false });
+  doc.moveDown(0.5);
+  
   if (data.overdueList.length === 0) {
-    doc.text("No overdue loans. All books are on time.");
+    doc.fontSize(11).font('Helvetica').fillColor("#7f8c8d").text("No overdue loans. All books are on time.");
   } else {
-    data.overdueList.forEach((o, i) => {
-      doc.text(
-        `${i + 1}. ${o.transaction.book?.title || "—"}  |  ${o.transaction.member?.name || "—"} (${
-          o.transaction.member?.membershipId || "—"
-        })  |  Due: ${o.transaction.dueDate?.toLocaleDateString("en-IN")}  |  ${o.daysLate} day(s) late  |  Fine: Rs. ${
-          o.estimatedFine
-        }`
-      );
+    const overdueTable = {
+      headers: [
+        { label: "Book", property: "book", width: 120 },
+        { label: "Member", property: "member", width: 100 },
+        { label: "ID", property: "id", width: 60 },
+        { label: "Due Date", property: "dueDate", width: 70 },
+        { label: "Late (Days)", property: "daysLate", width: 60 },
+        { label: "Fine (Rs)", property: "fine", width: 60 },
+      ],
+      datas: data.overdueList.map(o => ({
+        book: o.transaction.book?.title || "—",
+        member: o.transaction.member?.name || "—",
+        id: o.transaction.member?.membershipId || "—",
+        dueDate: o.transaction.dueDate?.toLocaleDateString("en-IN") || "—",
+        daysLate: o.daysLate.toString(),
+        fine: o.estimatedFine.toString()
+      }))
+    };
+    await doc.table(overdueTable, {
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
+      prepareRow: (row, indexColumn, indexRow, rectRow) => {
+        doc.font("Helvetica").fontSize(9).fillColor("#333333");
+        indexColumn === 0 && doc.addBackground(rectRow, (indexRow % 2 ? '#ffffff' : '#fcfcfc'), 0.15);
+      }
     });
   }
-  doc.moveDown(1);
 
-  doc.fontSize(14).text("Books Issued This Month", { underline: true });
-  doc.moveDown(0.3);
-  doc.fontSize(9);
+  doc.moveDown(2);
+
+  // Books Issued This Month Section
+  doc.fontSize(16).font('Helvetica-Bold').fillColor("#FF6B00").text("Books Issued This Month", { underline: false });
+  doc.moveDown(0.5);
+  
   if (data.issuedThisMonth.length === 0) {
-    doc.text("No books were issued this month.");
+    doc.fontSize(11).font('Helvetica').fillColor("#7f8c8d").text("No books were issued this month.");
   } else {
-    data.issuedThisMonth.forEach((t, i) => {
-      doc.text(
-        `${i + 1}. ${t.book?.title || "—"}  |  ${t.member?.name || "—"} (${
-          t.member?.membershipId || "—"
-        })  |  Issued: ${t.issueDate?.toLocaleDateString("en-IN")}  |  Due: ${t.dueDate?.toLocaleDateString(
-          "en-IN"
-        )}  |  Status: ${t.status}`
-      );
+    const issuedTable = {
+      headers: [
+        { label: "Book", property: "book", width: 130 },
+        { label: "Member", property: "member", width: 100 },
+        { label: "ID", property: "id", width: 60 },
+        { label: "Issued Date", property: "issueDate", width: 70 },
+        { label: "Due Date", property: "dueDate", width: 70 },
+        { label: "Status", property: "status", width: 60 },
+      ],
+      datas: data.issuedThisMonth.map(t => ({
+        book: t.book?.title || "—",
+        member: t.member?.name || "—",
+        id: t.member?.membershipId || "—",
+        issueDate: t.issueDate?.toLocaleDateString("en-IN") || "—",
+        dueDate: t.dueDate?.toLocaleDateString("en-IN") || "—",
+        status: t.status
+      }))
+    };
+    await doc.table(issuedTable, {
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
+      prepareRow: (row, indexColumn, indexRow, rectRow) => {
+        doc.font("Helvetica").fontSize(9).fillColor("#333333");
+        indexColumn === 0 && doc.addBackground(rectRow, (indexRow % 2 ? '#ffffff' : '#fcfcfc'), 0.15);
+      }
     });
   }
 

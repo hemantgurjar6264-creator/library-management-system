@@ -17,6 +17,11 @@ const errorHandler = (err, req, res, next) => {
     const field = Object.keys(err.keyValue || {})[0];
     message = `Duplicate value for field: ${field}`;
   }
+  if (err.name === "ValidationError") {
+    statusCode = 400;
+    const messages = Object.values(err.errors).map((val) => val.message);
+    message = messages.join(", ");
+  }
 
   res.status(statusCode).json({
     message,

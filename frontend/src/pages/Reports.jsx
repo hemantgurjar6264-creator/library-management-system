@@ -115,7 +115,7 @@ export default function Reports() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-card border border-ink-100/60 p-6 lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-card border border-ink-100/60 p-6 lg:col-span-2 hover:shadow-cardHover hover:border-brass-500 hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-semibold text-lg text-ink-800">
                   Overdue Loans ({summary.label})
@@ -151,30 +151,32 @@ export default function Reports() {
               )}
             </div>
 
-            <div className="bg-brass-500 rounded-xl shadow-card p-6 text-white">
+            <div className="bg-white rounded-xl shadow-card border border-ink-100/60 p-6 text-black hover:shadow-cardHover hover:border-brass-500 hover:-translate-y-1 transition-all duration-300">
               <h2 className="font-display font-semibold text-lg mb-4">Catalog Snapshot</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-white/70">Titles</span>
-                  <span className="font-mono font-medium">{summary.totals.totalBooks}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/70">Copies (available/total)</span>
+                  <span className="text-black/70">Total Books Available</span>
                   <span className="font-mono font-medium">
-                    {summary.totals.availableCopies}/{summary.totals.totalCopies}
+                    {summary.totals.availableCopies}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Members (active/total)</span>
+                  <span className="text-black/70">Total Book Copies</span>
                   <span className="font-mono font-medium">
-                    {summary.totals.activeMembers}/{summary.totals.totalMembers}
+                    {summary.totals.totalCopies}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t border-ink-50 pt-2">
+                  <span className="text-black/70">Total Members</span>
+                  <span className="font-mono font-medium">
+                    {summary.totals.activeMembers}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-card border border-ink-100/60 p-6">
+          <div className="bg-white rounded-xl shadow-card border border-ink-100/60 p-6 hover:shadow-cardHover hover:border-brass-500 hover:-translate-y-1 transition-all duration-300">
             <h2 className="font-display font-semibold text-lg text-ink-800 mb-1">Download Full Report</h2>
             <p className="text-sm text-ink-400 mb-4">
               Includes books issued, books returned, and the complete overdue list for {summary.label}.

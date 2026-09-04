@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Plus, Search, Pencil, Trash2, Users, Mail, Phone } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Plus, Search, Pencil, Trash2, Users, Mail, Phone, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import Modal from "../components/Modal";
@@ -14,6 +14,28 @@ export default function Members() {
   const [editingMember, setEditingMember] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const toastId = toast.loading("Uploading and importing members...");
+    try {
+      const { data } = await api.post("/members/bulk-upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      toast.success(data.message || "Members imported successfully", { id: toastId });
+      fetchMembers(search);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to import members", { id: toastId });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const fetchMembers = async (q = "") => {
     setLoading(true);
@@ -84,16 +106,7 @@ export default function Members() {
     }
   };
 
-  const handleDelete = async (member) => {
-    if (!window.confirm(`Remove "${member.name}" from members?`)) return;
-    try {
-      await api.delete(`/members/${member._id}`);
-      toast.success("Member removed");
-      fetchMembers(search);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Could not delete member");
-    }
-  };
+
 
   return (
     <div>
@@ -102,12 +115,27 @@ export default function Members() {
           <p className="text-xs font-semibold text-brass-600 uppercase tracking-widest mb-1">Members</p>
           <h1 className="font-display text-3xl font-semibold text-ink-800">Registered Members</h1>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 bg-brass-500 hover:bg-brass-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
-        >
-          <Plus size={16} /> Add Member
-        </button>
+        <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept=".xlsx" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleBulkUpload} 
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 bg-white hover:bg-parchment-100 text-ink-700 border border-ink-100 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-sm"
+          >
+            <Upload size={16} /> Import Excel
+          </button>
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-brass-500 hover:bg-brass-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
+          >
+            <Plus size={16} /> Add Member
+          </button>
+        </div>
       </div>
 
       <div className="relative mb-6 max-w-md">
@@ -178,12 +206,6 @@ export default function Members() {
                         className="p-2 text-ink-500 hover:text-ink-800 hover:bg-ink-50 rounded-md transition-colors"
                       >
                         <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(member)}
-                        className="p-2 text-rust hover:bg-rust/5 rounded-md transition-colors"
-                      >
-                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

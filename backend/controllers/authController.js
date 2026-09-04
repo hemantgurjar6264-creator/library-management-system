@@ -10,32 +10,6 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// @desc    Register a new admin/librarian user
-// @route   POST /api/auth/register
-const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
-
-  if (!name || !email || !password) {
-    res.status(400);
-    throw new Error("Please fill all required fields");
-  }
-
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    res.status(400);
-    throw new Error("User with this email already exists");
-  }
-
-  const user = await User.create({ name, email, password, role: role || "librarian" });
-
-  res.status(201).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    token: generateToken(user._id),
-  });
-});
 
 // @desc    Login user (accepts either name or email in the "identifier" field)
 // @route   POST /api/auth/login
@@ -127,9 +101,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   PUT /api/auth/reset-password/:token
 const resetPassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 6) {
+  if (!password || password.length < 8) {
     res.status(400);
-    throw new Error("Password must be at least 6 characters");
+    throw new Error("Password must be at least 8 characters");
+  }
+  
+  if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+    res.status(400);
+    throw new Error("Password must contain at least one letter and one number");
   }
 
   const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
@@ -158,4 +137,4 @@ const resetPassword = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { registerUser, loginUser, getMe, forgotPassword, resetPassword };
+module.exports = { loginUser, getMe, forgotPassword, resetPassword };

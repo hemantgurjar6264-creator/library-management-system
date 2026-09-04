@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 const {
   getBooks,
   getBookById,
@@ -10,8 +13,11 @@ const {
   getAuthors,
   getBookCopies,
   updateCopyStatus,
+  bulkUploadBooks,
 } = require("../controllers/bookController");
 const { protect } = require("../middleware/authMiddleware");
+
+router.post("/bulk-upload", protect, upload.single("file"), bulkUploadBooks);
 
 router.get("/meta/categories", protect, getCategories);
 router.get("/meta/authors", protect, getAuthors);

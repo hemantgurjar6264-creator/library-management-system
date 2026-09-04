@@ -5,12 +5,14 @@ const {
   issueBook,
   returnBook,
   getDashboardStats,
+  getOverdueBooks,
 } = require("../controllers/transactionController");
 const { protect } = require("../middleware/authMiddleware");
 
 router.get("/", protect, getTransactions);
 router.post("/issue", protect, issueBook);
 router.put("/:id/return", protect, returnBook);
+router.get("/overdue", protect, getOverdueBooks);
 router.get("/stats/dashboard", protect, getDashboardStats);
 
 module.exports = router;

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Plus, Search, Pencil, Trash2, BookOpen, MapPin, Layers, X as XIcon } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Plus, Search, Pencil, Trash2, BookOpen, MapPin, Layers, X as XIcon, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import Modal from "../components/Modal";
@@ -45,6 +45,29 @@ export default function Books() {
   const [copiesBook, setCopiesBook] = useState(null);
   const [copies, setCopies] = useState([]);
   const [copiesLoading, setCopiesLoading] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const toastId = toast.loading("Uploading and importing books...");
+    try {
+      const { data } = await api.post("/books/bulk-upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      toast.success(data.message || "Books imported successfully", { id: toastId });
+      fetchBooks();
+      fetchMeta();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to import books", { id: toastId });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const fetchMeta = async () => {
     try {
@@ -159,14 +182,14 @@ export default function Books() {
     }
   };
 
-  const handleDelete = async (book) => {
-    if (!window.confirm(`Remove "${book.title}" from the catalog?`)) return;
+  const handleArchive = async (book) => {
+    if (!window.confirm(`Archive "${book.title}"?`)) return;
     try {
       await api.delete(`/books/${book._id}`);
-      toast.success("Book removed");
+      toast.success("Book archived");
       fetchBooks({});
     } catch (err) {
-      toast.error(err.response?.data?.message || "Could not delete book");
+      toast.error(err.response?.data?.message || "Could not archive book");
     }
   };
 
@@ -206,12 +229,27 @@ export default function Books() {
           <p className="text-xs font-semibold text-brass-600 uppercase tracking-widest mb-1">Library Collection</p>
           <h1 className="font-display text-3xl font-semibold text-ink-800">Library Collection</h1>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 bg-brass-500 hover:bg-brass-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
-        >
-          <Plus size={16} /> Add Book
-        </button>
+        <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept=".xlsx" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleBulkUpload} 
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 bg-white hover:bg-parchment-100 text-ink-700 border border-ink-100 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-sm"
+          >
+            <Upload size={16} /> Import Excel
+          </button>
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-brass-500 hover:bg-brass-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
+          >
+            <Plus size={16} /> Add Book
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -344,10 +382,10 @@ export default function Books() {
                   <Pencil size={13} /> Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(book)}
+                  onClick={() => handleArchive(book)}
                   className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rust hover:bg-rust/5 rounded-md py-2 transition-colors"
                 >
-                  <Trash2 size={13} /> Remove
+                  <Trash2 size={13} /> Archive
                 </button>
               </div>
             </div>

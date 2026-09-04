@@ -31,8 +31,11 @@ export default function Login() {
   };
 
   return (
-    <div style={{ margin: 0, padding: 0, fontFamily: "'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", width: "100%", height: "100vh", display: "flex", backgroundColor: "#e2e8f0", backgroundImage: "url('/campus-hero.jpg')", backgroundSize: "cover", backgroundPosition: "center bottom", overflow: "hidden" }}>
+    <div style={{ margin: 0, padding: 0, fontFamily: "'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", width: "100%", height: "100vh", display: "flex", backgroundColor: "#e2e8f0", backgroundImage: "url('/campus-hero.jpg')", backgroundSize: "cover", backgroundPosition: "center bottom", overflow: "hidden", position: "relative" }}>
       
+      {/* Blur Overlay */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backdropFilter: "blur(4px)", zIndex: 0 }}></div>
+
       {/* Bottom Dark Bar spanning entire width */}
       <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "90px", backgroundColor: "#1c2b45", display: "flex", justifyContent: "flex-start", gap: "60px", alignItems: "center", padding: "0 60px", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
@@ -156,21 +159,6 @@ export default function Login() {
                 )}
               </button>
             </form>
-
-            {/* OR */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "20px 0" }}>
-              <div style={{ flex: 1, height: "1px", backgroundColor: "#f1f5f9" }}></div>
-              <span style={{ color: "#94a3b8", fontSize: "12px", fontWeight: "600" }}>OR</span>
-              <div style={{ flex: 1, height: "1px", backgroundColor: "#f1f5f9" }}></div>
-            </div>
-
-            {/* Sign Up */}
-            <Link to="/register" style={{ textDecoration: "none" }}>
-              <button type="button" style={{ width: "100%", padding: "14px", backgroundColor: "white", color: "#ff6b00", border: "1px solid #ffedd5", borderRadius: "10px", fontSize: "15px", fontWeight: "700", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginBottom: "15px" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                Sign Up 
-              </button>
-            </Link>
 
             {/* Footer */}
             <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", color: "#94a3b8", fontSize: "11px" }}>

@@ -3,9 +3,9 @@ const Transaction = require("../models/Transaction");
 const Book = require("../models/Book");
 const BookCopy = require("../models/BookCopy");
 const Member = require("../models/Member");
+const { getSettingsDoc } = require("./settingsController");
+const { logActivity } = require("./activityController");
 
-const FINE_PER_DAY = Number(process.env.FINE_PER_DAY) || 5; // ₹5 per day overdue
-const LOAN_DAYS = Number(process.env.LOAN_DAYS) || 14; // default loan period
 
 const POPULATE_FIELDS = [
   { path: "book", select: "title author isbn coverColor" },
@@ -40,6 +40,7 @@ const getTransactions = asyncHandler(async (req, res) => {
 // @route   POST /api/transactions/issue
 const issueBook = asyncHandler(async (req, res) => {
   const { bookId, memberId, loanDays } = req.body;
+  const settings = await getSettingsDoc();
 
   if (!bookId || !memberId) {
     res.status(400);
@@ -69,7 +70,7 @@ const issueBook = asyncHandler(async (req, res) => {
   }
 
   const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + (loanDays || LOAN_DAYS));
+  dueDate.setDate(dueDate.getDate() + (loanDays || settings.loanDuration || 14));
 
   const transaction = await Transaction.create({
     book: bookId,
@@ -87,6 +88,8 @@ const issueBook = asyncHandler(async (req, res) => {
 
   const populated = await transaction.populate(POPULATE_FIELDS);
 
+  await logActivity("Issue Book", `Issued book to ${member.name} (Transaction: ${transaction._id})`, req.user?._id);
+
   res.status(201).json(populated);
 });
 
@@ -94,6 +97,7 @@ const issueBook = asyncHandler(async (req, res) => {
 // @route   PUT /api/transactions/:id/return
 const returnBook = asyncHandler(async (req, res) => {
   const { copyCondition } = req.body; // optional: "lost" | "damaged" — otherwise copy goes back to "available"
+  const settings = await getSettingsDoc();
 
   const transaction = await Transaction.findById(req.params.id);
   if (!transaction) {
@@ -109,7 +113,7 @@ const returnBook = asyncHandler(async (req, res) => {
   let fine = 0;
   if (returnDate > transaction.dueDate) {
     const daysLate = Math.ceil((returnDate - transaction.dueDate) / (1000 * 60 * 60 * 24));
-    fine = daysLate * FINE_PER_DAY;
+    fine = daysLate * (settings.finePerDay || 5);
   }
 
   transaction.returnDate = returnDate;
@@ -134,6 +138,8 @@ const returnBook = asyncHandler(async (req, res) => {
   }
 
   const populated = await transaction.populate(POPULATE_FIELDS);
+  
+  await logActivity("Return Book", `Returned book for transaction ${transaction._id}`, req.user?._id);
 
   res.json(populated);
 });
@@ -141,6 +147,7 @@ const returnBook = asyncHandler(async (req, res) => {
 // @desc    Get dashboard statistics
 // @route   GET /api/transactions/stats/dashboard
 const getDashboardStats = asyncHandler(async (req, res) => {
+  const settings = await getSettingsDoc();
   const totalBooks = await Book.countDocuments();
   const totalMembers = await Member.countDocuments();
   const booksIssued = await Transaction.countDocuments({ status: { $in: ["issued", "overdue"] } });
@@ -168,7 +175,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   });
   const finesPending = overdueOpenLoans.reduce((sum, t) => {
     const daysLate = Math.ceil((now - t.dueDate) / (1000 * 60 * 60 * 24));
-    return sum + daysLate * FINE_PER_DAY;
+    return sum + daysLate * (settings.finePerDay || 5);
   }, 0);
 
   const recentTransactions = await Transaction.find()
@@ -176,6 +183,32 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     .populate("member", "name membershipId")
     .sort({ createdAt: -1 })
     .limit(6);
+
+  // Generate trend data for the last 6 months
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    months.push({
+      month: d.toLocaleString("default", { month: "short" }),
+      year: d.getFullYear(),
+      start: new Date(d.getFullYear(), d.getMonth(), 1),
+      end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
+    });
+  }
+
+  const trendData = await Promise.all(
+    months.map(async ({ month, start, end }) => {
+      const issued = await Transaction.countDocuments({
+        createdAt: { $gte: start, $lte: end }
+      });
+      const returned = await Transaction.countDocuments({
+        status: "returned",
+        updatedAt: { $gte: start, $lte: end }
+      });
+      return { name: month, issued, returned };
+    })
+  );
 
   res.json({
     totalBooks,
@@ -187,7 +220,32 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     finesCollected,
     finesPending,
     recentTransactions,
+    trendData, // Added for frontend recharts
   });
 });
 
-module.exports = { getTransactions, issueBook, returnBook, getDashboardStats };
+// @desc    Get Overdue Books specifically
+// @route   GET /api/transactions/overdue
+const getOverdueBooks = asyncHandler(async (req, res) => {
+  const now = new Date();
+  const settings = await getSettingsDoc();
+  
+  const overdueTransactions = await Transaction.find({
+    status: { $in: ["issued", "overdue"] },
+    dueDate: { $lt: now },
+  })
+    .populate(POPULATE_FIELDS)
+    .sort({ dueDate: 1 });
+    
+  // Calculate dynamic fine
+  const results = overdueTransactions.map(t => {
+    const daysLate = Math.ceil((now - t.dueDate) / (1000 * 60 * 60 * 24));
+    t.fine = daysLate * (settings.finePerDay || 5);
+    t.status = "overdue";
+    return t;
+  });
+  
+  res.json(results);
+});
+
+module.exports = { getTransactions, issueBook, returnBook, getDashboardStats, getOverdueBooks };

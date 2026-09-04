@@ -1,7 +1,10 @@
 const asyncHandler = require("express-async-handler");
+const exceljs = require("exceljs");
+const fs = require("fs");
 const Book = require("../models/Book");
 const BookCopy = require("../models/BookCopy");
 const Transaction = require("../models/Transaction");
+const { logActivity } = require("./activityController");
 
 // Helper: create N BookCopy documents for a book, starting after the highest existing copyNumber
 const createCopiesForBook = async (book, count, startFrom = 0) => {
@@ -30,8 +33,12 @@ const syncBookCounts = async (bookId) => {
 // @desc    Get all books (supports search & genre/author/availability filters)
 // @route   GET /api/books
 const getBooks = asyncHandler(async (req, res) => {
-  const { search, category, author, availability } = req.query;
-  let query = {};
+  const { search, category, author, availability, includeArchived } = req.query;
+  let query = { isArchived: { $ne: true } };
+  
+  if (includeArchived === "true") {
+    delete query.isArchived;
+  }
 
   if (search) {
     query.$or = [
@@ -94,6 +101,8 @@ const createBook = asyncHandler(async (req, res) => {
   });
 
   await createCopiesForBook(book, Number(totalCopies), 0);
+  
+  await logActivity("Add Book", `Added book: ${book.title}`, req.user?._id);
 
   res.status(201).json(book);
 });
@@ -135,10 +144,13 @@ const updateBook = asyncHandler(async (req, res) => {
   await book.save();
   await syncBookCounts(book._id);
   const updated = await Book.findById(book._id);
+  
+  await logActivity("Update Book", `Updated book: ${book.title}`, req.user?._id);
+  
   res.json(updated);
 });
 
-// @desc    Delete a book (and its copies)
+// @desc    Archive a book (soft delete)
 // @route   DELETE /api/books/:id
 const deleteBook = asyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id);
@@ -150,12 +162,18 @@ const deleteBook = asyncHandler(async (req, res) => {
   const issuedCopy = await BookCopy.findOne({ book: book._id, status: "issued" });
   if (issuedCopy) {
     res.status(400);
-    throw new Error("Cannot remove this title — one or more copies are currently issued");
+    throw new Error("Cannot archive this title — one or more copies are currently issued");
   }
 
-  await BookCopy.deleteMany({ book: book._id });
-  await book.deleteOne();
-  res.json({ message: "Book removed successfully" });
+  book.isArchived = true;
+  await book.save();
+  
+  await BookCopy.updateMany({ book: book._id }, { status: "archived" });
+  await syncBookCounts(book._id);
+  
+  await logActivity("Archive Book", `Archived book: ${book.title}`, req.user?._id);
+  
+  res.json({ message: "Book archived successfully" });
 });
 
 // @desc    Get distinct categories (genres)
@@ -241,6 +259,58 @@ const updateCopyStatus = asyncHandler(async (req, res) => {
   res.json(copy);
 });
 
+// @desc    Bulk upload books from Excel
+// @route   POST /api/books/bulk-upload
+const bulkUploadBooks = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error("No file uploaded");
+  }
+
+  const workbook = new exceljs.Workbook();
+  await workbook.xlsx.readFile(req.file.path);
+  const worksheet = workbook.getWorksheet(1);
+
+  if (!worksheet) {
+    res.status(400);
+    throw new Error("Invalid Excel file format");
+  }
+
+  const booksToAdd = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return; // Skip header
+
+    // Expected columns: Title, Author, ISBN, Category, Total Copies
+    const title = row.getCell(1).value?.toString()?.trim();
+    const author = row.getCell(2).value?.toString()?.trim();
+    const isbn = row.getCell(3).value?.toString()?.trim();
+    const category = row.getCell(4).value?.toString()?.trim() || "Uncategorized";
+    const totalCopies = parseInt(row.getCell(5).value) || 1;
+
+    if (title && author && isbn) {
+      booksToAdd.push({ title, author, isbn, category, totalCopies, availableCopies: totalCopies });
+    }
+  });
+
+  const addedBooks = [];
+  for (const bookData of booksToAdd) {
+    let book = await Book.findOne({ isbn: bookData.isbn });
+    if (!book) {
+      book = await Book.create(bookData);
+      await createCopiesForBook(book, bookData.totalCopies, 0);
+      addedBooks.push(book);
+    }
+  }
+
+  // Clean up uploaded file
+  if (req.file.path && fs.existsSync(req.file.path)) {
+    fs.unlinkSync(req.file.path);
+  }
+
+  res.status(201).json({ message: `${addedBooks.length} books successfully imported.` });
+});
+
 module.exports = {
   getBooks,
   getBookById,
@@ -252,4 +322,5 @@ module.exports = {
   getBookCopies,
   updateCopyStatus,
   syncBookCounts,
+  bulkUploadBooks,
 };
