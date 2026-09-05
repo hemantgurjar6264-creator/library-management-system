@@ -15,6 +15,7 @@ const emptyForm = {
   publishedYear: "",
   totalCopies: 1,
   rackLocation: "",
+  department: "",
 };
 
 const COPY_STATUS_STYLES = {
@@ -147,6 +148,7 @@ export default function Books() {
       publishedYear: book.publishedYear || "",
       totalCopies: book.totalCopies,
       rackLocation: book.rackLocation || "",
+      department: book.department || "",
     });
     setModalOpen(true);
   };
@@ -359,6 +361,11 @@ export default function Books() {
                   <span className="px-2 py-0.5 rounded bg-ink-50 text-ink-500 font-medium">
                     {book.category}
                   </span>
+                  {book.department && (
+                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-medium ml-1">
+                      {book.department}
+                    </span>
+                  )}
                   {book.rackLocation && (
                     <span className="flex items-center gap-1 text-ink-400">
                       <MapPin size={11} /> {book.rackLocation}
@@ -487,10 +494,21 @@ export default function Books() {
               <label className="block text-xs font-semibold text-ink-600 uppercase tracking-wide mb-1.5">
                 Rack Location
               </label>
-              <input
+                <input
                 placeholder="e.g. A-12"
                 value={form.rackLocation}
                 onChange={(e) => setForm({ ...form, rackLocation: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white focus:border-brass-400 focus:ring-2 focus:ring-brass-100 outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-ink-600 uppercase tracking-wide mb-1.5">
+                Department / Course
+              </label>
+              <input
+                placeholder="e.g. BCA, B.Tech"
+                value={form.department}
+                onChange={(e) => setForm({ ...form, department: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white focus:border-brass-400 focus:ring-2 focus:ring-brass-100 outline-none text-sm"
               />
             </div>

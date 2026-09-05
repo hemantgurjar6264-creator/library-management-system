@@ -44,7 +44,7 @@ const getMemberById = asyncHandler(async (req, res) => {
 // @desc    Create a member
 // @route   POST /api/members
 const createMember = asyncHandler(async (req, res) => {
-  const { name, email, phone, address } = req.body;
+  const { name, email, phone, address, department } = req.body;
   if (!name || !email || !phone) {
     res.status(400);
     throw new Error("Please provide name, email and phone");
@@ -52,7 +52,7 @@ const createMember = asyncHandler(async (req, res) => {
 
   const membershipId = await generateMembershipId();
 
-  const member = await Member.create({ name, email, phone, address, membershipId });
+  const member = await Member.create({ name, email, phone, address, membershipId, department });
   
   await logActivity("Add Member", `Added member: ${member.name}`, req.user?._id);
 
@@ -114,14 +114,15 @@ const bulkUploadMembers = asyncHandler(async (req, res) => {
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // Skip header
 
-    // Expected columns: Name, Email, Phone, Address
+    // Expected columns: Name, Email, Phone, Address, Department
     const name = row.getCell(1).value?.toString()?.trim();
     const email = row.getCell(2).value?.toString()?.trim();
     const phone = row.getCell(3).value?.toString()?.trim();
     const address = row.getCell(4).value?.toString()?.trim() || "";
+    const department = row.getCell(5).value?.toString()?.trim() || "";
 
     if (name && email && phone) {
-      membersToAdd.push({ name, email, phone, address });
+      membersToAdd.push({ name, email, phone, address, department });
     }
   });
 

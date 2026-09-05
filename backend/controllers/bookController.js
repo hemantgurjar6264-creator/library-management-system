@@ -86,7 +86,7 @@ const getBookById = asyncHandler(async (req, res) => {
 // @desc    Create a book (auto-generates individually tracked copies)
 // @route   POST /api/books
 const createBook = asyncHandler(async (req, res) => {
-  const { title, author, isbn, category, publisher, publishedYear, totalCopies, rackLocation, coverColor } = req.body;
+  const { title, author, isbn, category, publisher, publishedYear, totalCopies, rackLocation, coverColor, department } = req.body;
 
   if (!title || !author || !isbn || !totalCopies) {
     res.status(400);
@@ -104,6 +104,7 @@ const createBook = asyncHandler(async (req, res) => {
     availableCopies: totalCopies,
     rackLocation,
     coverColor,
+    department,
   });
 
   await createCopiesForBook(book, Number(totalCopies), 0);
@@ -287,15 +288,16 @@ const bulkUploadBooks = asyncHandler(async (req, res) => {
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // Skip header
 
-    // Expected columns: Title, Author, ISBN, Category, Total Copies
+    // Expected columns: Title, Author, ISBN, Category, Total Copies, Department
     const title = row.getCell(1).value?.toString()?.trim();
     const author = row.getCell(2).value?.toString()?.trim();
     const isbn = row.getCell(3).value?.toString()?.trim();
     const category = row.getCell(4).value?.toString()?.trim() || "Uncategorized";
     const totalCopies = parseInt(row.getCell(5).value) || 1;
+    const department = row.getCell(6).value?.toString()?.trim() || "";
 
     if (title && author && isbn) {
-      booksToAdd.push({ title, author, isbn, category, totalCopies, availableCopies: totalCopies });
+      booksToAdd.push({ title, author, isbn, category, totalCopies, availableCopies: totalCopies, department });
     }
   });
 

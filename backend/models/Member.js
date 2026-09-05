@@ -30,6 +30,7 @@ const memberSchema = new mongoose.Schema(
     membershipId: { type: String, required: [true, "Membership ID is required"], unique: true },
     status: { type: String, enum: ["active", "suspended", "inactive"], default: "active" },
     joinedDate: { type: Date, default: Date.now },
+    department: { type: String, trim: true, default: "" },
   },
   { timestamps: true }
 );

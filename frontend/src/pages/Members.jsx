@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import api from "../api/axios";
 import Modal from "../components/Modal";
 
-const emptyForm = { name: "", email: "", phone: "", address: "" };
+const emptyForm = { name: "", email: "", phone: "", address: "", department: "" };
 
 export default function Members() {
   const [members, setMembers] = useState([]);
@@ -71,6 +71,7 @@ export default function Members() {
       email: member.email,
       phone: member.phone,
       address: member.address || "",
+      department: member.department || "",
     });
     setModalOpen(true);
   };
@@ -173,6 +174,7 @@ export default function Members() {
               <tr className="bg-ink-50/60 text-left text-ink-500 text-xs uppercase tracking-wide">
                 <th className="px-5 py-3 font-semibold">Member</th>
                 <th className="px-5 py-3 font-semibold">Contact</th>
+                <th className="px-5 py-3 font-semibold">Department</th>
                 <th className="px-5 py-3 font-semibold">Membership ID</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
                 <th className="px-5 py-3 font-semibold text-right">Actions</th>
@@ -196,6 +198,15 @@ export default function Members() {
                     <div className="flex items-center gap-1.5 text-xs">
                       <Phone size={12} /> {member.phone}
                     </div>
+                  </td>
+                  <td className="px-5 py-3.5 text-ink-500">
+                    {member.department ? (
+                      <span className="px-2.5 py-1 rounded-full bg-ink-50 text-ink-600 text-[11px] font-semibold tracking-wide">
+                        {member.department}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-5 py-3.5 font-mono text-ink-500">{member.membershipId}</td>
                   <td className="px-5 py-3.5">
@@ -284,6 +295,17 @@ export default function Members() {
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white focus:border-brass-400 focus:ring-2 focus:ring-brass-100 outline-none text-sm resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-ink-600 uppercase tracking-wide mb-1.5">
+              Department / Course
+            </label>
+            <input
+              placeholder="e.g. BCA, B.Tech, MEG"
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-ink-100 bg-white focus:border-brass-400 focus:ring-2 focus:ring-brass-100 outline-none text-sm"
             />
           </div>
 
