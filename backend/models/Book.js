@@ -39,7 +39,6 @@ const bookSchema = new mongoose.Schema(
     rackLocation: { type: String, trim: true, default: "" },
     coverColor: { type: String, default: "#8a5a2b" },
     isArchived: { type: Boolean, default: false },
-    department: { type: String, trim: true, default: "" },
   },
   { timestamps: true }
 );
