@@ -111,6 +111,9 @@ app.get("/", (req, res) => {
   res.json({ message: "📚 Library Management System API is running..." });
 });
 
+// Ignore favicon requests to prevent 404 errors
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/books", require("./routes/bookRoutes"));
 app.use("/api/members", require("./routes/memberRoutes"));
