@@ -78,6 +78,8 @@ export default function Login() {
           <img
             src="/ssism-logo.png"
             alt="Sant Singaji Institute of Science & Management"
+            fetchpriority="high"
+            loading="eager"
             className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[400px] max-w-[80%] drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
           />
         </div>
